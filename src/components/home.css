@@ -27,7 +27,7 @@
   cursor: pointer;
 }
 
-.todo {
+.book {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,7 +35,7 @@
   margin-bottom: 10px;
 }
 
-.todo > h1 {
+.book > h1 {
   width: 500px;
   background-color: rgb(211, 211, 211);
   padding: 5px 10px;

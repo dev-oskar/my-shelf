@@ -17,8 +17,8 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import CheckIcon from "@mui/icons-material/Check";
 
 export default function Home() {
-  const [todo, setTodo] = useState("");
-  const [todos, setTodos] = useState([]);
+  const [book, setBook] = useState("");
+  const [books, setBooks] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const [tempUidd, setTempUidd] = useState("");
   const navigate = useNavigate();
@@ -28,11 +28,11 @@ export default function Home() {
       if (user) {
         // read from the database
         onValue(ref(db, `/${auth.currentUser.uid}`), (snapshot) => {
-          setTodos([]);
+          setBooks([]);
           const data = snapshot.val();
           if (data !== null) {
-            Object.values(data).map((todo) => {
-              setTodos((oldArray) => [...oldArray, todo]);
+            Object.values(data).map((book) => {
+              setBooks((oldArray) => [...oldArray, book]);
             });
           }
         });
@@ -58,27 +58,27 @@ export default function Home() {
   const writeToDatabase = () => {
     const uidd = uid();
     set(ref(db, `/${auth.currentUser.uid}/${uidd}`), {
-      todo: todo,
+      book: book,
       uidd: uidd,
     });
 
-    setTodo("");
+    setBook("");
   };
 
   // update
-  const handleUpdate = (todo) => {
+  const handleUpdate = (book) => {
     setIsEdit(true);
-    setTodo(todo.todo);
-    setTempUidd(todo.uidd);
+    setBook(book.book);
+    setTempUidd(book.uidd);
   };
 
   const handleEditConfirm = () => {
     update(ref(db, `/${auth.currentUser.uid}/${tempUidd}`), {
-      todo: todo,
+      book: book,
       tempUidd: tempUidd,
     });
 
-    setTodo("");
+    setBook("");
     setIsEdit(false);
   };
 
@@ -92,22 +92,23 @@ export default function Home() {
       <input
         className="add-edit-input"
         type="text"
-        placeholder="Add todo..."
-        value={todo}
-        onChange={(e) => setTodo(e.target.value)}
+        placeholder="Add book..."
+        value={book}
+        onChange={(e) => setBook(e.target.value)}
       />
 
-      {todos.map((todo, index) => (
-        <div className="todo" key={"item-" + index}>
-          <h1>{todo.todo}</h1>
+      <h1 class="text-3xl font-bold italic">Books read:</h1>
+      {books.map((book, index) => (
+        <div className="book" key={book.uidd}>
+          <h1>{book.book}</h1>
           <EditIcon
             fontSize="large"
-            onClick={() => handleUpdate(todo)}
+            onClick={() => handleUpdate(book)}
             className="edit-button"
           />
           <DeleteIcon
             fontSize="large"
-            onClick={() => handleDelete(todo.uidd)}
+            onClick={() => handleDelete(book.uidd)}
             className="delete-button"
           />
         </div>
@@ -122,6 +123,9 @@ export default function Home() {
           <AddIcon onClick={writeToDatabase} className="add-confirm-icon" />
         </div>
       )}
+
+      <h1>Books unread</h1>
+
       <LogoutIcon onClick={handleSignOut} className="logout-icon" />
     </div>
   );
