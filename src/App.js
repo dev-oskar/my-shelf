@@ -5,7 +5,7 @@ import Home from "./components/Home";
 
 function App() {
   return (
-    <div className="app">
+    <div className="bg-gradient-to-tr from-violet-500 to-orange-300">
       <Router>
         <Routes>
           <Route path="/" element={<Welcome />} />
