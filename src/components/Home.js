@@ -17,6 +17,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckIcon from "@mui/icons-material/Check";
 
+import BooksSVG from "../assets/undraw_books.svg";
+
 export default function Home() {
   const [book, setBook] = useState({
     title: "",
@@ -30,11 +32,13 @@ export default function Home() {
     handleSubmit,
     watch,
     formState: { errors },
+    reset,
   } = useForm();
 
   const onSubmit = (data) => writeToDatabase(data);
 
-  const [books, setBooks] = useState([]);
+  const [readBooks, setReadBooks] = useState([]);
+  const [unreadBooks, setUnreadBooks] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const [tempUidd, setTempUidd] = useState("");
   const navigate = useNavigate();
@@ -44,11 +48,16 @@ export default function Home() {
       if (user) {
         // read from the database
         onValue(ref(db, `/${auth.currentUser.uid}`), (snapshot) => {
-          setBooks([]);
+          setReadBooks([]);
+          setUnreadBooks([]);
           const data = snapshot.val();
           if (data !== null) {
             Object.values(data).map((book) => {
-              setBooks((oldArray) => [...oldArray, book]);
+              if (book.isRead) {
+                setReadBooks((oldArray) => [...oldArray, book]);
+              } else {
+                setUnreadBooks((oldArray) => [...oldArray, book]);
+              }
             });
           }
         });
@@ -76,8 +85,8 @@ export default function Home() {
     data.uidd = uidd;
 
     set(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
-
-    // setBook("");
+    // additionaly reset form after save to database
+    reset();
   };
 
   // update
@@ -105,7 +114,7 @@ export default function Home() {
   return (
     <div className="w-full h-full">
       <ul
-        className="nav nav-tabs flex flex-col md:flex-row flex-wrap list-none border-b-0 pl-0 mb-4 absolute bottom-0 left-0 right-0"
+        className="nav nav-tabs flex flex-col md:flex-row flex-wrap list-none border-b-0 pl-0 absolute bottom-0 left-0 right-0"
         id="tabs-tabFill"
         role="tablist"
       >
@@ -205,13 +214,19 @@ export default function Home() {
           role="tabpanel"
           aria-labelledby="tabs-home-tabFill"
         >
-          <p className="font-bold text-center w-full text-3xl uppercase text-white pt-4">
+          {/* <div className=""> */}
+          {/* <div className="grow-0 shrink-1 md:shrink-0 basis-auto xl:w-6/12 lg:w-6/12 md:w-9/12 mb-12 md:mb-0">
+            <img className="w-72 h-72" src={BooksSVG} />
+          </div> */}
+          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
             Read books
           </p>
           <div className="w-2/3 h-2/3 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
-            {books.map((book, index) => (
+            {readBooks.map((book) => (
               <div className="book" key={book.uidd}>
-                <h1>{book.book}</h1>
+                <h1>{book.title}</h1>
+                <h1>{book.author}</h1>
+                <h1>{book.description}</h1>
                 <EditIcon
                   fontSize="large"
                   onClick={() => handleUpdate(book)}
@@ -232,9 +247,28 @@ export default function Home() {
           role="tabpanel"
           aria-labelledby="tabs-profile-tabFill"
         >
-          <p className="font-bold text-center w-full text-3xl uppercase text-white pt-4">
+          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
             Unread books
           </p>
+          <div className="w-2/3 h-2/3 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
+            {unreadBooks.map((book) => (
+              <div className="book" key={book.uidd}>
+                <h1>{book.title}</h1>
+                <h1>{book.author}</h1>
+                <h1>{book.description}</h1>
+                <EditIcon
+                  fontSize="large"
+                  onClick={() => handleUpdate(book)}
+                  className="edit-button"
+                />
+                <DeleteIcon
+                  fontSize="large"
+                  onClick={() => handleDelete(book.uidd)}
+                  className="delete-button"
+                />
+              </div>
+            ))}
+          </div>
         </div>
         <div
           className="tab-pane fade"
@@ -242,7 +276,7 @@ export default function Home() {
           role="tabpanel"
           aria-labelledby="tabs-profile-tabFill"
         >
-          <p className="font-bold text-center w-full text-3xl uppercase text-white pt-4">
+          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
             Add new
           </p>
           <div className="max-w-md h-auto p-4 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
@@ -360,12 +394,6 @@ export default function Home() {
                 Add
               </button>
             </form>
-            {/* <input
-              type="text"
-              placeholder="Add book..."
-              value={book}
-              onChange={(e) => setBook(e.target.value)}
-            /> */}
           </div>
         </div>
       </div>
