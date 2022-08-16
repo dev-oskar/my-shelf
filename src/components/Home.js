@@ -14,6 +14,7 @@ import "./home.css";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import BookIcon from "@mui/icons-material/AutoStories";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CheckIcon from "@mui/icons-material/Check";
 
@@ -111,10 +112,16 @@ export default function Home() {
     remove(ref(db, `/${auth.currentUser.uid}/${uid}`));
   };
 
+  const onBookClicked = (book) => {
+    console.log(book);
+    debugger;
+    setTempUidd(book.uidd);
+  };
+
   return (
     <div className="w-full h-full">
       <ul
-        className="nav nav-tabs flex flex-col md:flex-row flex-wrap list-none border-b-0 pl-0 absolute bottom-0 left-0 right-0"
+        className="nav nav-tabs flex flex-col md:flex-row flex-wrap list-none border-b-0 pl-0 absolute bottom-0 left-0 right-0 p-4 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg"
         id="tabs-tabFill"
         role="tablist"
       >
@@ -133,7 +140,7 @@ export default function Home() {
               py-3
               my-2
               active
-              text-white
+              text-slate-800
               hover:border-transparent hover:bg-white hover:bg-opacity-40 hover:backdrop-blur-md hover:rounded hover:drop-shadow-lg
               focus:border-transparent
             "
@@ -152,7 +159,7 @@ export default function Home() {
           <a
             href="#tabs-unreadBooks"
             className="
-              text-white
+              text-slate-800
               w-full
               block
               font-medium
@@ -181,7 +188,7 @@ export default function Home() {
           <a
             href="#tabs-addNew"
             className="
-              text-white
+              text-slate-800
               w-full
               block
               font-medium
@@ -218,12 +225,13 @@ export default function Home() {
           {/* <div className="grow-0 shrink-1 md:shrink-0 basis-auto xl:w-6/12 lg:w-6/12 md:w-9/12 mb-12 md:mb-0">
             <img className="w-72 h-72" src={BooksSVG} />
           </div> */}
-          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
+          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-slate-800 pt-4 text-center">
             Read books
           </p>
-          <div className="w-2/3 h-2/3 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
+          <div className="w-2/3 h-2/3 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-10 overflow-auto">
             {readBooks.map((book) => (
               <div className="book" key={book.uidd}>
+                <BookIcon fontSize="large" />
                 <h1>{book.title}</h1>
                 <h1>{book.author}</h1>
                 <h1>{book.description}</h1>
@@ -247,25 +255,26 @@ export default function Home() {
           role="tabpanel"
           aria-labelledby="tabs-profile-tabFill"
         >
-          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
+          <p className="font-medium leading-tight drop-shadow-md text-5xl mt-0 mb-2 text-slate-800 pt-4 text-center">
             Unread books
           </p>
-          <div className="w-2/3 h-2/3 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
+          <div className="w-2/3 h-2/3 bg-violet-500 shadow-lg p-2 bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-10 overflow-auto">
             {unreadBooks.map((book) => (
-              <div className="book" key={book.uidd}>
-                <h1>{book.title}</h1>
-                <h1>{book.author}</h1>
-                <h1>{book.description}</h1>
-                <EditIcon
-                  fontSize="large"
-                  onClick={() => handleUpdate(book)}
-                  className="edit-button"
-                />
-                <DeleteIcon
-                  fontSize="large"
-                  onClick={() => handleDelete(book.uidd)}
-                  className="delete-button"
-                />
+              <div
+                className="m-2 p-2 bg-white bg-opacity-20 backdrop-blur-lg rounded shadow-md drop-shadow-lg mx-auto cursor-pointer"
+                key={book.uidd}
+                onClick={() => onBookClicked(book)}
+              >
+                <div className="w-full inline-flex">
+                  <BookIcon fontSize="large" className="mr-2 text-slate-800" />
+                  <p className="text-2xl font-semibold tracking-wider text-slate-800">
+                    {book.title}
+                  </p>
+                </div>
+                <p className="w-full text-lg text-slate-700">{book.author}</p>
+                <p className="w-full text-md text-slate-600 h-6 text-ellipsis overflow-hidden whitespace-nowrap">
+                  {book.description}
+                </p>
               </div>
             ))}
           </div>
@@ -276,7 +285,7 @@ export default function Home() {
           role="tabpanel"
           aria-labelledby="tabs-profile-tabFill"
         >
-          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-blue-600 pt-4 text-center">
+          <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-slate-800 pt-4 text-center">
             Add new
           </p>
           <div className="max-w-md h-auto p-4 bg-white bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-20">
@@ -377,7 +386,7 @@ export default function Home() {
                   px-6
                   py-2.5
                   bg-blue-600
-                  text-white
+                  text-slate-800
                   font-medium
                   text-xs
                   leading-tight
