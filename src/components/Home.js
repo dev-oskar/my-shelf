@@ -28,6 +28,8 @@ export default function Home() {
     isRead: false,
   });
 
+  // Handler for Add New form
+  const onSubmit = (data) => writeToDatabase(data, false);
   const {
     register,
     handleSubmit,
@@ -37,6 +39,8 @@ export default function Home() {
     setValue,
   } = useForm();
 
+  // Handler for Edit Modal form
+  const onSubmitEdit = (data) => writeToDatabase(data, true);
   const {
     register: registerTemp,
     formState: { errors: errorsTemp },
@@ -44,9 +48,6 @@ export default function Home() {
     reset: resetTemp,
     setValue: setTempValue,
   } = useForm();
-
-  const onSubmit = (data) => writeToDatabase(data, false);
-  const onSubmitEdit = (data) => writeToDatabase(data, true);
 
   const [readBooks, setReadBooks] = useState([]);
   const [unreadBooks, setUnreadBooks] = useState([]);
@@ -94,6 +95,15 @@ export default function Home() {
       });
   };
 
+  // book clicked
+  const onBookClicked = (book) => {
+    setTempBook(book);
+    setTempValue("title", book.title, { shouldTouch: true });
+    setTempValue("author", book.author, { shouldTouch: true });
+    setTempValue("description", book.description, { shouldTouch: true });
+    setTempValue("isRead", book.isRead, { shouldTouch: true });
+  };
+
   // create an entry
   const writeToDatabase = (data, isUpdating) => {
     let uidd = "";
@@ -114,42 +124,18 @@ export default function Home() {
     // additionaly reset form after save to database
     if (isUpdating) {
       resetTemp();
+      document.getElementById("idModalCloseBtn").click();
     } else {
       reset();
     }
   };
 
-  // update
-  const handleUpdate = (book) => {
-    // setIsEdit(true);
-    setBook(book.book);
-    setTempBook(book.uidd);
-  };
-
-  const handleEditConfirm = () => {
-    update(ref(db, `/${auth.currentUser.uid}/${tempBook}`), {
-      book: book,
-      tempUidd: tempBook,
-    });
-
-    setBook("");
-    // setIsEdit(false);
-  };
-
   // delete
-  const handleDelete = (uid) => {
-    remove(ref(db, `/${auth.currentUser.uid}/${uid}`));
-  };
-
-  const onBookClicked = (book) => {
-    // console.log(book);
-    // debugger;
-
-    setTempBook(book);
-    setTempValue("title", book.title, { shouldTouch: true });
-    setTempValue("author", book.author, { shouldTouch: true });
-    setTempValue("description", book.description, { shouldTouch: true });
-    setTempValue("isRead", book.isRead, { shouldTouch: true });
+  const handleDelete = (tempBook) => {
+    if (tempBook.uidd) {
+      let uid = tempBook.uidd;
+      remove(ref(db, `/${auth.currentUser.uid}/${uid}`));
+    }
   };
 
   return (
@@ -173,6 +159,7 @@ export default function Home() {
               </h5>
               <button
                 type="button"
+                id="idModalCloseBtn"
                 className="btn-close box-content w-4 h-4 p-1 text-black border-none rounded-none opacity-50 focus:shadow-none focus:outline-none focus:opacity-100 hover:text-black hover:opacity-75 hover:no-underline"
                 data-bs-dismiss="modal"
                 aria-label="Close"
@@ -273,6 +260,13 @@ export default function Home() {
                   </label>
                 </div>
                 <div className="modal-footer flex flex-shrink-0 flex-wrap items-center justify-end p-4 border-t border-gray-200 rounded-b-md">
+                  {/* <button
+                    onClick={handleDelete(tempBook)}
+                    type="button"
+                    className="inline-block px-6 py-2.5 bg-red-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-red-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    Delete
+                  </button> */}
                   <button
                     type="button"
                     className="inline-block px-6 py-2.5 bg-purple-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-purple-700 hover:shadow-lg focus:bg-purple-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-purple-800 active:shadow-lg transition duration-150 ease-in-out"
@@ -400,37 +394,38 @@ export default function Home() {
           <p className="font-medium leading-tight text-5xl mt-0 mb-2 text-slate-800 pt-4 text-center">
             Read books
           </p>
-          <div
-            className="w-2/3
-                h-2/3
-                bg-white 
-                bg-opacity-20
-                backdrop-blur-lg
-                rounded
-                drop-shadow-lg
-                mx-auto
-                my-10
-                overflow-auto
-                "
-            data-bs-toggle="modal"
-            data-bs-target="#idModal"
-          >
+          <div className="w-2/3 h-2/3 bg-violet-500 shadow-lg p-2 bg-opacity-20 backdrop-blur-lg rounded drop-shadow-lg mx-auto my-10 overflow-auto">
             {readBooks.map((book) => (
-              <div className="book" key={book.uidd}>
-                <BookIcon fontSize="large" />
-                <h1>{book.title}</h1>
-                <h1>{book.author}</h1>
-                <h1>{book.description}</h1>
-                <EditIcon
-                  fontSize="large"
-                  onClick={() => handleUpdate(book)}
-                  className="edit-button"
-                />
-                <DeleteIcon
-                  fontSize="large"
-                  onClick={() => handleDelete(book.uidd)}
-                  className="delete-button"
-                />
+              <div
+                className="m-2
+                  p-2
+                  bg-white
+                  bg-opacity-20 
+                  backdrop-blur-lg
+                  drop-shadow-lg 
+                  mx-auto 
+                  cursor-pointer
+                  hover:bg-dark 
+                  hover:bg-opacity-40
+                  hover:border
+                  hover:border-slate-800
+                  font-medium text-xs leading-tight uppercase rounded shadow-md hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out
+                  "
+                data-bs-toggle="modal"
+                data-bs-target="#idModal"
+                key={book.uidd}
+                onClick={() => onBookClicked(book)}
+              >
+                <div className="w-full inline-flex">
+                  <BookIcon fontSize="large" className="mr-2 text-slate-800" />
+                  <p className="text-2xl font-semibold tracking-wider text-slate-800">
+                    {book.title}
+                  </p>
+                </div>
+                <p className="w-full text-lg text-slate-700">{book.author}</p>
+                <p className="w-full text-md text-slate-600 h-6 text-ellipsis overflow-hidden whitespace-nowrap">
+                  {book.description}
+                </p>
               </div>
             ))}
           </div>
@@ -616,7 +611,7 @@ export default function Home() {
           <AddIcon onClick={writeToDatabase} className="add-confirm-icon" />
         </div>
       )} */}
-      {/* <LogoutIcon onClick={handleSignOut} className="logout-icon" /> */}
+      <LogoutIcon onClick={handleSignOut} className="logout-icon" />
     </div>
   );
 }
