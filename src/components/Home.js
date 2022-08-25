@@ -34,14 +34,28 @@ export default function Home() {
     watch,
     formState: { errors },
     reset,
+    setValue,
   } = useForm();
 
-  const onSubmit = (data) => writeToDatabase(data);
+  const {
+    register: registerTemp,
+    formState: { errors: errorsTemp },
+    handleSubmit: handleSubmitTemp,
+    reset: resetTemp,
+    setValue: setTempValue,
+  } = useForm();
+
+  const onSubmit = (data) => writeToDatabase(data, false);
+  const onSubmitEdit = (data) => writeToDatabase(data, true);
 
   const [readBooks, setReadBooks] = useState([]);
   const [unreadBooks, setUnreadBooks] = useState([]);
-  const [isEdit, setIsEdit] = useState(false);
-  const [tempUidd, setTempUidd] = useState("");
+  const [tempBook, setTempBook] = useState({
+    title: "",
+    author: "",
+    description: "",
+    isRead: false,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,30 +95,45 @@ export default function Home() {
   };
 
   // create an entry
-  const writeToDatabase = (data) => {
-    const uidd = uid();
-    data.uidd = uidd;
+  const writeToDatabase = (data, isUpdating) => {
+    let uidd = "";
+    if (isUpdating == false) {
+      uidd = uid();
+      data.uidd = uidd;
+    } else {
+      uidd = tempBook.uidd;
+    }
 
-    set(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
+    try {
+      // do the set request
+      set(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
+    } catch (error) {
+      console.error(error);
+    }
+
     // additionaly reset form after save to database
-    reset();
+    if (isUpdating) {
+      resetTemp();
+    } else {
+      reset();
+    }
   };
 
   // update
   const handleUpdate = (book) => {
-    setIsEdit(true);
+    // setIsEdit(true);
     setBook(book.book);
-    setTempUidd(book.uidd);
+    setTempBook(book.uidd);
   };
 
   const handleEditConfirm = () => {
-    update(ref(db, `/${auth.currentUser.uid}/${tempUidd}`), {
+    update(ref(db, `/${auth.currentUser.uid}/${tempBook}`), {
       book: book,
-      tempUidd: tempUidd,
+      tempUidd: tempBook,
     });
 
     setBook("");
-    setIsEdit(false);
+    // setIsEdit(false);
   };
 
   // delete
@@ -113,28 +142,23 @@ export default function Home() {
   };
 
   const onBookClicked = (book) => {
-    console.log(book);
-    debugger;
-    setTempUidd(book.uidd);
+    // console.log(book);
+    // debugger;
+
+    setTempBook(book);
+    setTempValue("title", book.title, { shouldTouch: true });
+    setTempValue("author", book.author, { shouldTouch: true });
+    setTempValue("description", book.description, { shouldTouch: true });
+    setTempValue("isRead", book.isRead, { shouldTouch: true });
   };
 
   return (
     <div className="w-full h-full">
-      {/* <div className=""> */}
-      {/* <button
-        type="button"
-        className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-        data-bs-toggle="modal"
-        data-bs-target="#exampleModalCenteredScrollable"
-      >
-        Vertically centered scrollable modal
-      </button> */}
-      {/* </div> */}
       <div
         className="modal fade fixed top-0 left-0 hidden w-full h-full outline-none overflow-x-hidden overflow-y-auto"
-        id="exampleModalCenteredScrollable"
-        tabindex="-1"
-        aria-labelledby="exampleModalCenteredScrollable"
+        id="idModal"
+        tabIndex="-1"
+        aria-labelledby="idModal"
         aria-modal="true"
         role="dialog"
       >
@@ -143,9 +167,9 @@ export default function Home() {
             <div className="modal-header flex flex-shrink-0 items-center justify-between p-4 border-b border-gray-200 rounded-t-md">
               <h5
                 className="text-xl font-medium leading-normal text-gray-800"
-                id="exampleModalCenteredScrollableLabel"
+                id="idModalLabel"
               >
-                Modal title
+                Editing book
               </h5>
               <button
                 type="button"
@@ -155,31 +179,115 @@ export default function Home() {
               ></button>
             </div>
             <div className="modal-body relative p-4">
-              <p>
-                This is some placeholder content to show a vertically centered
-                modal. We've added some extra copy here to show how vertically
-                centering the modal works when combined with scrollable modals.
-                We also use some repeated line breaks to quickly extend the
-                height of the content, thereby triggering the scrolling. When
-                content becomes longer than the predefined max-height of modal,
-                content will be cropped and scrollable within the modal.
-              </p>
-              <p>Just like that.</p>
-            </div>
-            <div className="modal-footer flex flex-shrink-0 flex-wrap items-center justify-end p-4 border-t border-gray-200 rounded-b-md">
-              <button
-                type="button"
-                className="inline-block px-6 py-2.5 bg-purple-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-purple-700 hover:shadow-lg focus:bg-purple-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-purple-800 active:shadow-lg transition duration-150 ease-in-out"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out ml-1"
-              >
-                Save changes
-              </button>
+              <form onSubmit={handleSubmitTemp(onSubmitEdit)}>
+                <div className="form-group mb-6 h-auto">
+                  <input
+                    type="text"
+                    className="form-control block
+                    w-full
+                    px-3
+                    py-1.5
+                    text-base
+                    font-normal
+                    text-gray-700
+                    bg-white bg-clip-padding
+                    border border-solid border-gray-300
+                    rounded
+                    transition
+                    ease-in-out
+                    m-0
+                    focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    id="idTempBookTitle"
+                    {...registerTemp("title", { required: true, minLength: 3 })}
+                    placeholder="Title"
+                  />
+                  {errorsTemp.title && <span>This field is required</span>}
+                </div>
+                <div className="form-group mb-6">
+                  <input
+                    className="form-control block
+                    w-full
+                    px-3
+                    py-1.5
+                    text-base
+                    font-normal
+                    text-gray-700
+                    bg-white bg-clip-padding
+                    border border-solid border-gray-300
+                    rounded
+                    transition
+                    ease-in-out
+                    m-0
+                    focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
+                    id="idBookAuthorTemp"
+                    placeholder="Author"
+                    {...registerTemp("author", {
+                      required: true,
+                      minLength: 3,
+                    })}
+                  />
+                  {errorsTemp.author && <span>This field is required</span>}
+                </div>
+                <div className="form-group mb-6">
+                  <textarea
+                    className="
+                    form-control
+                    block
+                    w-full
+                    px-3
+                    py-1.5
+                    text-base
+                    font-normal
+                    text-gray-700
+                    bg-white bg-clip-padding
+                    border border-solid border-gray-300
+                    rounded
+                    transition
+                    ease-in-out
+                    m-0
+                    focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
+                  "
+                    id="idBookDescriptionTemp"
+                    rows="3"
+                    placeholder="Description (optional)"
+                    {...registerTemp("description", {
+                      minLength: 3,
+                    })}
+                  ></textarea>
+                  {errorsTemp.description && (
+                    <span>Minimum 3 characters required</span>
+                  )}
+                </div>
+                <div className="form-group form-check text-center">
+                  <input
+                    type="checkbox"
+                    {...registerTemp("isRead")}
+                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain mr-2 cursor-pointer"
+                    id="idIsReadTemp"
+                  />
+                  <label
+                    className="form-check-label inline-block text-gray-800 cursor-pointer"
+                    htmlFor="idIsReadTemp"
+                  >
+                    Is the book read?
+                  </label>
+                </div>
+                <div className="modal-footer flex flex-shrink-0 flex-wrap items-center justify-end p-4 border-t border-gray-200 rounded-b-md">
+                  <button
+                    type="button"
+                    className="inline-block px-6 py-2.5 bg-purple-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-purple-700 hover:shadow-lg focus:bg-purple-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-purple-800 active:shadow-lg transition duration-150 ease-in-out"
+                    data-bs-dismiss="modal"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out ml-1"
+                  >
+                    Save changes
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -305,7 +413,7 @@ export default function Home() {
                 overflow-auto
                 "
             data-bs-toggle="modal"
-            data-bs-target="#exampleModalCenteredScrollable"
+            data-bs-target="#idModal"
           >
             {readBooks.map((book) => (
               <div className="book" key={book.uidd}>
@@ -354,7 +462,7 @@ export default function Home() {
                   font-medium text-xs leading-tight uppercase rounded shadow-md hover:shadow-lg focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out
                   "
                 data-bs-toggle="modal"
-                data-bs-target="#exampleModalCenteredScrollable"
+                data-bs-target="#idModal"
                 key={book.uidd}
                 onClick={() => onBookClicked(book)}
               >
