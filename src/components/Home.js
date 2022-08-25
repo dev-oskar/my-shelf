@@ -110,23 +110,37 @@ export default function Home() {
     if (isUpdating == false) {
       uidd = uid();
       data.uidd = uidd;
+
+      // do the set request
+      if (uidd) {
+        try {
+          set(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          // additionaly reset form after save to database
+          reset();
+        }
+      } else {
+        console.error("Invalid tempBook.uidd provided");
+      }
     } else {
       uidd = tempBook.uidd;
-    }
+      data.uidd = uidd;
 
-    try {
-      // do the set request
-      set(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
-    } catch (error) {
-      console.error(error);
-    }
-
-    // additionaly reset form after save to database
-    if (isUpdating) {
-      resetTemp();
-      document.getElementById("idModalCloseBtn").click();
-    } else {
-      reset();
+      if (uidd) {
+        try {
+          update(ref(db, `/${auth.currentUser.uid}/${uidd}`), data);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          // additionaly reset form after save to database
+          resetTemp();
+          document.getElementById("idModalCloseBtn").click();
+        }
+      } else {
+        console.error("Invalid tempBook.uidd provided");
+      }
     }
   };
 
